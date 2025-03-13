@@ -3,14 +3,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const menuToggle = document.querySelector('.menu-toggle');
     const navLinks = document.querySelector('.nav-links');
     
-    if (menuToggle) {
+    if (menuToggle && navLinks) {
         menuToggle.addEventListener('click', () => {
             navLinks.classList.toggle('active');
-            // Animate hamburger menu
-            const spans = menuToggle.querySelectorAll('span');
-            spans.forEach(span => span.classList.toggle('active'));
+            menuToggle.classList.toggle('active');
         });
     }
+
+    // Close mobile menu when a link is clicked
+    const mobileLinks = document.querySelectorAll('.nav-links a');
+    mobileLinks.forEach(link => {
+        link.addEventListener('click', () => {
+            navLinks.classList.remove('active');
+            menuToggle.classList.remove('active');
+        });
+    });
     
     // Header scroll effect
     const header = document.querySelector('header');
