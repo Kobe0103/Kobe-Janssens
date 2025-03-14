@@ -65,10 +65,123 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
     
+    // Create modal popup
+    const createModal = () => {
+        // Create modal elements
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.id = 'contactModal';
+        
+        const modalContent = document.createElement('div');
+        modalContent.className = 'modal-content';
+        
+        const closeBtn = document.createElement('span');
+        closeBtn.className = 'close-modal';
+        closeBtn.innerHTML = '&times;';
+        closeBtn.onclick = () => {
+            modal.style.display = 'none';
+        };
+        
+        const modalTitle = document.createElement('h3');
+        modalTitle.textContent = 'Sending Message...';
+        
+        const modalMessage = document.createElement('p');
+        modalMessage.id = 'modalMessage';
+        modalMessage.textContent = 'Please wait while your message is being sent.';
+        
+        // Append elements
+        modalContent.appendChild(closeBtn);
+        modalContent.appendChild(modalTitle);
+        modalContent.appendChild(modalMessage);
+        modal.appendChild(modalContent);
+        
+        // Add modal styles
+        const style = document.createElement('style');
+        style.textContent = `
+            .modal {
+                display: none;
+                position: fixed;
+                z-index: 1000;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                overflow: auto;
+                background-color: rgba(0,0,0,0.7);
+                backdrop-filter: blur(5px);
+            }
+            .modal-content {
+                position: relative;
+                background-color: #222;
+                margin: 15% auto;
+                padding: 2rem;
+                border: 1px solid var(--primary-color);
+                width: 80%;
+                max-width: 500px;
+                border-radius: 8px;
+                box-shadow: 0 4px 20px rgba(166, 51, 255, 0.3);
+                animation: modalFade 0.3s ease-in-out;
+            }
+            @keyframes modalFade {
+                from {opacity: 0; transform: translateY(-20px);}
+                to {opacity: 1; transform: translateY(0);}
+            }
+            .close-modal {
+                color: #aaa;
+                float: right;
+                font-size: 28px;
+                font-weight: bold;
+                cursor: pointer;
+            }
+            .close-modal:hover {
+                color: var(--primary-color);
+            }
+            .modal h3 {
+                margin-top: 0;
+                color: var(--white);
+            }
+            .modal p {
+                color: var(--white);
+            }
+            .modal-spinner {
+                display: inline-block;
+                width: 30px;
+                height: 30px;
+                border: 3px solid rgba(166, 51, 255, 0.3);
+                border-radius: 50%;
+                border-top-color: var(--primary-color);
+                animation: spin 1s ease-in-out infinite;
+                margin-right: 10px;
+            }
+            @keyframes spin {
+                to { transform: rotate(360deg); }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Add modal to document
+        document.body.appendChild(modal);
+        
+        return modal;
+    };
+    
+    // Create modal on page load
+    const modal = createModal();
+    
     // Form submission handler
     const contactForm = document.querySelector('.contact-form');
     
     if (contactForm) {
+        // Add EmailJS script
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js';
+        document.head.appendChild(script);
+        
+        // Initialize EmailJS
+        script.onload = () => {
+            emailjs.init("QmYuwTc4YP7J2Zosz");
+        };
+        
         contactForm.addEventListener('submit', e => {
             e.preventDefault();
             
@@ -78,31 +191,40 @@ document.addEventListener('DOMContentLoaded', () => {
             const subject = contactForm.querySelector('#subject').value;
             const message = contactForm.querySelector('#message').value;
             
-            // Here you would typically send the form data to a server
-            // For demonstration, we'll just log it to console
-            console.log({name, email, subject, message});
+            // Show modal
+            const modal = document.getElementById('contactModal');
+            const modalMessage = document.getElementById('modalMessage');
             
-            // Show success message
-            const successMessage = document.createElement('div');
-            successMessage.className = 'success-message';
-            successMessage.textContent = 'Thank you! Your message has been sent successfully.';
-            successMessage.style.padding = '1rem';
-            successMessage.style.marginTop = '1rem';
-            successMessage.style.backgroundColor = 'rgba(166, 51, 255, 0.1)';
-            successMessage.style.color = 'var(--white)';
-            successMessage.style.borderRadius = '4px';
-            successMessage.style.border = '1px solid var(--primary-color)';
+            // Add loading spinner
+            modalMessage.innerHTML = '<div class="modal-spinner"></div> Sending your message...';
+            modal.style.display = 'block';
             
-            // Insert success message after form
-            contactForm.parentNode.insertBefore(successMessage, contactForm.nextSibling);
+            // Prepare email data
+            const templateParams = {
+                from_name: name,
+                from_email: email,
+                subject: subject,
+                message: message,
+                to_email: 'kobejanssens31@gmail.com'
+            };
             
-            // Reset form
-            contactForm.reset();
-            
-            // Remove success message after 5 seconds
-            setTimeout(() => {
-                successMessage.remove();
-            }, 5000);
+            // Send email using EmailJS with your actual IDs
+            emailjs.send('service_36ykr6b', 'template_x1u9fpm', templateParams)
+                .then(function(response) {
+                    // Update modal on success
+                    modalMessage.innerHTML = 'Your message has been sent successfully! I\'ll get back to you soon.';
+                    contactForm.reset();
+                    
+                    // Auto-close modal after 5 seconds
+                    setTimeout(() => {
+                        modal.style.display = 'none';
+                    }, 5000);
+                })
+                .catch(function(error) {
+                    // Update modal on error
+                    modalMessage.innerHTML = 'Sorry, there was an error sending your message. Please try again or contact me directly at kobejanssens31@gmail.com';
+                    console.error('EmailJS error:', error);
+                });
         });
     }
 });
